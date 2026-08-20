@@ -107,6 +107,13 @@ Json
   ]
 }
 ```
+
+
+Change the name of the bucket before saving the policy 
+
+
+<img width="615" height="574" alt="image" src="https://github.com/user-attachments/assets/7f07bfe3-b10a-43ca-91d7-74bffe28179d" />
+
 ---
 
 **website.tf**
@@ -123,6 +130,10 @@ resource "aws_s3_bucket_website_configuration" "project1_bucket" {
 ---
 
 **objects.tf**
+
+Upload index.html and style.css files either on s3 bucket  or copy and paste code in terraform directories 
+<img width="2021" height="1231" alt="image" src="https://github.com/user-attachments/assets/bd872e5b-088b-4160-9962-2bacb97f3ea1" />
+
 ```
 Hcl
 ```
@@ -140,6 +151,7 @@ resource "aws_s3_object" "style_css" {
   content_type = "text/css"
 }
 ```
+
 ---
 **ec2.tf**
 
