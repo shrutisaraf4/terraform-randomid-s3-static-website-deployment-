@@ -41,6 +41,7 @@ Hcl
 provider "aws" {
   region = var.aws_region
 }
+
 terraform {
   required_providers {
     aws = {
@@ -53,6 +54,7 @@ terraform {
     }
   }
 }
+
 ```
 ---
 
@@ -61,9 +63,10 @@ terraform {
 Hcl
 ```
 ```
-resource "random_id" "rand_id" {
-  byte_length = 8
+resource "random_id" "bucket_id" {
+  byte_length = 4
 }
+
 ```
 ---
 
@@ -73,59 +76,67 @@ Hcl
 ```
 ```
 resource "aws_s3_bucket" "project1_bucket" {
-  bucket = "project1-bucket-${random_id.rand_id.hex}"
+  bucket = "project1-bucket-${random_id.bucket_id.hex}"
+
   tags = {
-    Name        = "project1_bucket"
+    Name        = "Project1Bucket"
     Environment = "Dev"
   }
 }
+
+# Disable Block Public Access at bucket level
+resource "aws_s3_bucket_public_access_block" "project1_bucket_access" {
+  bucket                  = aws_s3_bucket.project1_bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
 ```
 ---
 
-**Disable block public access**
-
-Go to bucket > permission > block public access > edit > toggle off >save 
-
-<img width="616" height="316" alt="image" src="https://github.com/user-attachments/assets/97306f61-9cc2-4a73-95ac-baf0fae0df26" />
-
----
 **bucket-policy.tf**
 ```
 Json
 ```
 ```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicReadGetObject",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": ["s3:GetObject"],
-      "Resource": ["arn:aws:s3:::project1-bucket-<random-id>/*"]
-    }
-  ]
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.project1_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["arn:aws:s3:::${aws_s3_bucket.project1_bucket.bucket}/*"]
+      }
+    ]
+  })
 }
+
 ```
-
-
-Change the name of the bucket before saving the policy 
-
-
-<img width="615" height="574" alt="image" src="https://github.com/user-attachments/assets/7f07bfe3-b10a-43ca-91d7-74bffe28179d" />
-
----
 
 **website.tf**
 ```
 Hcl
 ```
 ```
-resource "aws_s3_bucket_website_configuration" "project1_bucket" {
+resource "aws_s3_bucket_website_configuration" "project1_bucket_website" {
   bucket = aws_s3_bucket.project1_bucket.id
-  index_document { suffix = "index.html" }
-  error_document { key = "error.html" }
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
+  }
 }
+
 ```
 ---
 
@@ -144,12 +155,14 @@ resource "aws_s3_object" "index_html" {
   source       = "index.html"
   content_type = "text/html"
 }
+
 resource "aws_s3_object" "style_css" {
   bucket       = aws_s3_bucket.project1_bucket.id
   key          = "style.css"
   source       = "style.css"
   content_type = "text/css"
 }
+
 ```
 
 ---
@@ -172,18 +185,18 @@ resource "aws_instance" "project1_server" {
 hcl
 ```
 ```
-output "aws_instance_public_ip" {
-  value = aws_instance.project1_server.public_ip
-}
 output "bucket_name" {
   value = aws_s3_bucket.project1_bucket.bucket
 }
-output "website_endpoint" {
-  value = aws_s3_bucket_website_configuration.project1_bucket.website_endpoint
-}
+
 output "bucket_region" {
   value = var.aws_region
 }
+
+output "website_endpoint" {
+  value = aws_s3_bucket_website_configuration.project1_bucket_website.website_endpoint
+}
+
 ```
 ---
 
@@ -196,6 +209,7 @@ variable "aws_region" {
   description = "AWS region to deploy resources"
   default     = "eu-north-1"
 }
+
 ```
 ---
 **index.html**
@@ -287,8 +301,8 @@ footer {
 Bash
 ```
 ```
-terraform init
 aws configure
+terraform init
 terraform plan
 terraform apply
 ```
