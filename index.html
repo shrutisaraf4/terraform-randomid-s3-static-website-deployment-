@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Static Website Deployment Using S3 Bucket - Fully Automated</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Static Website Deployment Using S3 Bucket - Fully Automated</h1>
+      <p>Automated Infrastructure-as-Code project deploying a static website on AWS S3 using Terraform with dynamic random ID generation.</p>
+      <div class="author-badge">✨ Fully Automated by Shruti Saraf</div>
+    </header>
+
+    <main>
+      <!-- README Intro Section -->
+      <section>
+        <h2>📌 Project Overview</h2>
+        <p>This automated Infrastructure-as-Code project deploys a static website on AWS S3 using Terraform, with random ID generation controlled via Terraform. This ensures globally unique bucket names and reproducible deployments.</p>
+        <p>Reference Guide: <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteAccessPermissionsReqd.html" target="_blank" style="color: #60a5fa;">AWS S3 Website Access Permissions</a></p>
+      </section>
+
+      <!-- Prerequisites -->
+      <section>
+        <h2>📌 Prerequisites</h2>
+        <ul>
+          <li>AWS account with IAM user having <code>AmazonS3FullAccess</code> and <code>AmazonEC2FullAccess</code></li>
+          <li>AWS CLI installed and configured (<code>aws configure</code>)</li>
+          <li>Terraform installed (v1.5+ recommended)</li>
+        </ul>
+      </section>
+
+      <!-- Project Structure -->
+      <section>
+        <h2>📂 Project Structure</h2>
+        <pre class="file-tree">terraform-randomid-s3-static/
+│── provider.tf
+│── random.tf
+│── main.tf
+│── bucket-policy.tf
+│── website.tf
+│── objects.tf
+│── ec2.tf
+│── outputs.tf
+│── variables.tf
+│── index.html
+│── style.css</pre>
+      </section>
+
+      <!-- Code Snippets -->
+      <section>
+        <h2>💻 Configuration Code Files</h2>
+
+        <h3>provider.tf</h3>
+        <pre><code>provider "aws" {
+  region = var.aws_region
+}
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.51.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.9.0"
+    }
+  }
+}</code></pre>
+
+        <h3>random.tf</h3>
+        <pre><code>resource "random_id" "bucket_id" {
+  byte_length = 4
+}</code></pre>
+
+        <h3>main.tf</h3>
+        <pre><code>resource "aws_s3_bucket" "project1_bucket" {
+  bucket = "project1-bucket-${random_id.bucket_id.hex}"
+
+  tags = {
+    Name        = "Project1Bucket"
+    Environment = "Dev"
+  }
+}
+
+# Disable Block Public Access at bucket level
+resource "aws_s3_bucket_public_access_block" "project1_bucket_access" {
+  bucket                  = aws_s3_bucket.project1_bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}</code></pre>
+
+        <h3>bucket-policy.tf</h3>
+        <pre><code>resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.project1_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["arn:aws:s3:::${aws_s3_bucket.project1_bucket.bucket}/*"]
+      }
+    ]
+  })
+}</code></pre>
+
+        <h3>website.tf</h3>
+        <pre><code>resource "aws_s3_bucket_website_configuration" "project1_bucket_website" {
+  bucket = aws_s3_bucket.project1_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
+  }
+}</code></pre>
+
+        <h3>objects.tf</h3>
+        <pre><code># Upload index.html and style.css files to S3 bucket via Terraform
+resource "aws_s3_object" "index_html" {
+  bucket       = aws_s3_bucket.project1_bucket.id
+  key          = "index.html"
+  source       = "index.html"
+  content_type = "text/html"
+}
+
+resource "aws_s3_object" "style_css" {
+  bucket       = aws_s3_bucket.project1_bucket.id
+  key          = "style.css"
+  source       = "style.css"
+  content_type = "text/css"
+}</code></pre>
+
+        <h3>ec2.tf</h3>
+        <pre><code>resource "aws_instance" "project1_server" {
+  ami           = "ami-023b6eace47afd3b4"
+  instance_type = "t3.nano"
+  tags = { Name = "project1_server" }
+}</code></pre>
+
+        <h3>outputs.tf</h3>
+        <pre><code>output "bucket_name" {
+  value = aws_s3_bucket.project1_bucket.bucket
+}
+
+output "bucket_region" {
+  value = var.aws_region
+}
+
+output "website_endpoint" {
+  value = aws_s3_bucket_website_configuration.project1_bucket_website.website_endpoint
+}</code></pre>
+
+        <h3>variables.tf</h3>
+        <pre><code>variable "aws_region" {
+  description = "AWS region to deploy resources"
+  default     = "eu-north-1"
+}</code></pre>
+      </section>
+
+      <!-- Deployment Commands -->
+      <section>
+        <h2>✅ Deployment Commands</h2>
+        <pre><code>aws configure
+terraform init
+terraform plan
+terraform apply</code></pre>
+      </section>
+
+      <!-- Verify Website -->
+      <section>
+        <h2>🔎 Verify Website</h2>
+        <p>Your static site will be available at:</p>
+        <pre><code>https://&lt;bucket-name&gt;.s3-website.&lt;region&gt;.amazonaws.com</code></pre>
+      </section>
+    </main>
+
+    <footer>
+      <p>© 2026 Shruti Saraf | Fully Automated Static Website Deployment on AWS</p>
+    </footer>
+  </div>
+
+</body>
+</html>
