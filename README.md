@@ -1,21 +1,25 @@
-**Static Website Deployment Using S3 Bucket - Fully Automated with Terraform**
+# **Static Website Deployment Using S3 Bucket - Fully Automated with Terraform**
+##                   Terraform | S3 Bucket | AWS EC2 
+
+---
 
 Automated Infrastructure-as-Code project that deploys a **static website on AWS S3** using **Terraform**, with **random ID generation controlled via Terraform**.  
 This ensures globally unique bucket names and reproducible deployments.
 Use article : https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteAccessPermissionsReqd.html
+
 <img width="1920" height="1280" alt="image" src="https://github.com/user-attachments/assets/4d0c0911-5864-421f-ad13-0648ceaff7f8" />
 
 
 ---
 
-**## 📌 Prerequisites**
+## ** 📌 Prerequisites**
 
 - AWS account with IAM user having `AmazonS3FullAccess` and `AmazonEC2FullAccess`
 - AWS CLI installed and configured (`aws configure`)
 - Terraform installed (v1.5+ recommended)
 - PowerShell (for random ID automation scripts)
 ---
-**📂 Project Structure**
+## **📂 Project Structure**
 
 ```
 terraform-randomid-s3-static/
@@ -33,7 +37,7 @@ terraform-randomid-s3-static/
 ```
 ---
 
-**provider.tf**
+### **provider.tf**
 ```
 Hcl
 ```
@@ -58,7 +62,7 @@ terraform {
 ```
 ---
 
-**random.tf**
+### **random.tf**
 ```
 Hcl
 ```
@@ -70,7 +74,7 @@ resource "random_id" "bucket_id" {
 ```
 ---
 
-**main.tf**
+### **main.tf**
 ```
 Hcl
 ```
@@ -96,7 +100,7 @@ resource "aws_s3_bucket_public_access_block" "project1_bucket_access" {
 ```
 ---
 
-**bucket-policy.tf**
+### **bucket-policy.tf**
 ```
 Json
 ```
@@ -120,7 +124,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 
 ```
 
-**website.tf**
+### **website.tf**
 ```
 Hcl
 ```
@@ -140,7 +144,7 @@ resource "aws_s3_bucket_website_configuration" "project1_bucket_website" {
 ```
 ---
 
-**objects.tf**
+### **objects.tf**
 
 Upload index.html and style.css files either on s3 bucket  or copy and paste code in terraform directories 
 <img width="580" height="617" alt="image" src="https://github.com/user-attachments/assets/efffcb13-2625-47e2-850a-62d5f93a1d85" />
@@ -167,7 +171,7 @@ resource "aws_s3_object" "style_css" {
 ```
 
 ---
-**ec2.tf**
+### **ec2.tf**
 
 ```
 Hcl
@@ -181,7 +185,7 @@ resource "aws_instance" "project1_server" {
 ```
 ---
 
-**outputs.tf**
+### **outputs.tf**
 ```
 hcl
 ```
@@ -201,7 +205,7 @@ output "website_endpoint" {
 ```
 ---
 
-**variables.tf**
+### **variables.tf**
 ```
 Hcl
 ```
@@ -213,7 +217,7 @@ variable "aws_region" {
 
 ```
 ---
-**index.html**
+### **index.html**
 ```
 html
 ```
@@ -417,7 +421,7 @@ terraform apply</code></pre>
 ```
 ---
 
-**style.css**
+### **style.css**
 ```
 css
 ```
@@ -570,7 +574,7 @@ footer {
 ```
 
 ---
-**✅ Deployment Commands**
+### **✅ Deployment Commands**
 
 ```
 Bash
@@ -582,12 +586,13 @@ terraform plan
 terraform apply
 ```
 ---
-**🔎 Verify Website**
+### **🔎 Verify Website**
 After apply it will display your static website url
 Your static site will be available at: http://<your-bucket-name>.s3-website.<region>.amazonaws.com
 
 <img width="1153" height="562" alt="image" src="https://github.com/user-attachments/assets/927cbcd3-6e8d-4747-a62d-59bb751b53c9" />
 
 
+<img width="1896" height="867" alt="image" src="https://github.com/user-attachments/assets/daa475cb-74f2-494e-885b-286e1c34ea8f" />
 
 ---
